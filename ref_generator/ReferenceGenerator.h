@@ -17,22 +17,17 @@ public:
     //   theta_f: 끝 위치
     //   theta_dot_f: 끝 속도
     //   theta_ddot_f: 끝 가속도
-    void calculate_coefficients(double time_ref_start, double time_ref_fin,
-                                double theta_ref_start, double theta_dot_ref_start, double theta_ddot_ref_start,
-                                double theta_ref_fin, double theta_dot_ref_fin, double theta_ddot_ref_fin);
-    
+
     // 특정 시간 t에 대한 목표 위치를 계산
-    double get_position(double t);
+    double get_position(double current_time);
     
     // 특정 시간 t에 대한 목표 속도를 계산
-    double get_velocity(double t);
+    double get_velocity(double current_time);
     
     // 특정 시간 t에 대한 목표 가속도를 계산
-    double get_acceleration(double t);
+    double get_acceleration(double current_time);
 
 private:
     double alpha_coeffs[6];
     double time_ref_start, time_ref_fin;
-    int discrete_count_k;
-    double sampling_period;
 };
