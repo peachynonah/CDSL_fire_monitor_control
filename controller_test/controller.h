@@ -3,9 +3,10 @@
 class ManualController {
     public:
         ManualController();
+        int tau;
         
     public:
-        double calculateTau(double tau);
+        int calculateTau(int input_tau = 0);
 };
 
 
@@ -38,3 +39,6 @@ class FLController {
         double calculateTau(int index, double joint_error, double joint_error_dot);
     
 };
+
+int toque_saturate(int torque, int max_torque_norm=1000) {
+}

@@ -5,26 +5,42 @@
 using namespace std;
 
 
+// functions
+int torque_saturate(int torque, int max_torque_norm) {
+    int max_torque = max_torque_norm;
+    int min_torque = -max_torque_norm;
 
+    if (torque > max_torque) {
+        return max_torque;
+    } else if (torque < min_torque) {
+        return min_torque;
+    }
+    
+    return torque;
+}
+
+
+//controller implementations
 
 ManualController::ManualController() {
     // Constructor to initialize the manual controller
 }
 
-double ManualController::calculateTau(double tau) {
+int ManualController::calculateTau(int input_tau) {
     // Implement the calculation for tau
+    tau = torque_saturate(input_tau); // Example max torque norm
     return tau;
 }
 
 
 PDController::PDController() {
     // Initialize gains
-    Kp_PD[0] = 1.0; Kp_PD[1] = 1.0;
-    Kd_PD[0] = 0.1; Kd_PD[1] = 0.1;
+    Kp_PD[0] = 100.0; Kp_PD[1] = 50.0;
+    Kd_PD[0] = 10.0; Kd_PD[1] = 5.0;
 }
 
-double PDController::calculateTau(int index, double joint_error, double joint_error_dot) {
-    tau[index] = Kp_PD[index] * joint_error + Kd_PD[index] * joint_error_dot;
+int PDController::calculateTau(int index, double joint_error, double joint_error_dot) {
+    tau[index] = Kp_PD[index] * joint_error + Kd_PD[index] * joint_error_dot;    
     return tau[index];
 }
 
