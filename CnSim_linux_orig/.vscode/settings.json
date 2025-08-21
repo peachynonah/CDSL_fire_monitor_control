@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "*.txx": "cpp",
+        "array": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "iostream": "cpp"
+    }
+}
