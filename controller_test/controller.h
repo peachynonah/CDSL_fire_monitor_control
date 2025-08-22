@@ -39,6 +39,3 @@ class FLController {
         double calculateTau(int index, double joint_error, double joint_error_dot);
     
 };
-
-int toque_saturate(int torque, int max_torque_norm=1000) {
-}
