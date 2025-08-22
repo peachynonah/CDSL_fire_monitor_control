@@ -49,6 +49,8 @@ int rt_posix_create(pthread_t* thread_id, size_t stacksize, int policy, int prio
 void rt_posix_init_periodic(Period_Info* PInfo, long period_ns)
 {
 	PInfo->period_ns = 4000000; // 4ms
+	//PInfo->period_ns = 4000000; // 4ms
+
 
 	clock_gettime(CLOCK_REALTIME, &(PInfo->next_period));
 }
