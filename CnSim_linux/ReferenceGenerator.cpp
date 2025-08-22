@@ -1,0 +1,82 @@
+#include "ReferenceGenerator.h"
+#include <iostream>
+#include <cmath>
+#include <stdexcept>
+
+// 생성자
+ReferenceGenerator::ReferenceGenerator() {
+    // //situation1
+    // time_ref_start = 0.0; time_ref_fin = 10.0;
+    // alpha_coeffs[5] = 6.90459e-07; alpha_coeffs[4] = -0.000327968; alpha_coeffs[3] = 0.00425783619;
+    // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = 0.0;
+
+    // //situation2: start at 0.0, finish at pi/2
+    // time_ref_start = 0.0; time_ref_fin = 30.0;
+    // alpha_coeffs[5] = 1.33282e-09; alpha_coeffs[4] = -5.89773e-06; alpha_coeffs[3] = 0.00023391;
+    // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = 0.0;
+
+    //situation3
+    time_ref_start = 0.0; time_ref_fin = 30.0;
+    alpha_coeffs[5] = 1.33282e-09; alpha_coeffs[4] = -5.89773e-06; alpha_coeffs[3] = 0.00023391;
+    alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = 0.644942;
+}
+
+
+// 1. desired reference position at current time
+double ReferenceGenerator::get_position(double current_time) {
+    // 궤적 시작 전에는 초기 위치를 반환
+    if (current_time < time_ref_start) {
+        return 0.0;
+    }
+
+    // 궤적 끝난 후에는 최종 위치를 반환
+    else if (current_time >= time_ref_fin) {
+        double t_diff_final = time_ref_fin - time_ref_start;
+        return alpha_coeffs[5] * std::pow(t_diff_final, 5) +
+               alpha_coeffs[4] * std::pow(t_diff_final, 4) +
+               alpha_coeffs[3] * std::pow(t_diff_final, 3) +
+               alpha_coeffs[2] * std::pow(t_diff_final, 2) +
+               alpha_coeffs[1] * t_diff_final +
+               alpha_coeffs[0];
+    }
+
+    else if (time_ref_start <= current_time < time_ref_fin){
+    // 궤적 구간 내에서는 다항식 계산
+    double t_diff = current_time - time_ref_start;
+
+    printf("inner loop reference generator, time difference is %f", t_diff);  
+    return alpha_coeffs[5] * std::pow(t_diff, 5) +
+           alpha_coeffs[4] * std::pow(t_diff, 4) +
+           alpha_coeffs[3] * std::pow(t_diff, 3) +
+           alpha_coeffs[2] * std::pow(t_diff, 2) +
+           alpha_coeffs[1] * t_diff +
+           alpha_coeffs[0];
+    }
+}
+
+// 2. desired reference velocity at current time
+double ReferenceGenerator::get_velocity(double current_time) {
+    if (current_time < time_ref_start || current_time >= time_ref_fin) {
+        return 0.0;
+    }
+    
+    double t_diff = current_time - time_ref_start;
+    return 5 * alpha_coeffs[0] * std::pow(t_diff, 4) +
+           4 * alpha_coeffs[1] * std::pow(t_diff, 3) +
+           3 * alpha_coeffs[2] * std::pow(t_diff, 2) +
+           2 * alpha_coeffs[3] * t_diff +
+           alpha_coeffs[4];
+}
+
+// 3. desired reference accleration at current time
+double ReferenceGenerator::get_acceleration(double current_time) {
+    if (current_time < time_ref_start || current_time >= time_ref_fin) {
+        return 0.0;
+    }
+    
+    double t_diff = current_time - time_ref_start;
+    return 20 * alpha_coeffs[0] * std::pow(t_diff, 3) +
+           12 * alpha_coeffs[1] * std::pow(t_diff, 2) +
+           6 * alpha_coeffs[2] * t_diff +
+           2 * alpha_coeffs[3];
+}

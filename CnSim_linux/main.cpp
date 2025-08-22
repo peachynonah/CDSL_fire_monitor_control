@@ -25,6 +25,17 @@
 CCAN_Manager m_canManager;
 //------   End of Can Interface Header and Variables (JSShin)   ------//
 
+//------ CDSL Controller code ------//
+#include "controller.h"
+ManualController m_manual_controller;
+PDController m_PD_controller;
+FLController m_FL_controller;
+#include "ReferenceGenerator.h"
+ReferenceGenerator m_reference_generator;
+int loop_counter = 0;
+
+//------ CDSL Controller code ------//
+
 
 // USER Paramter //
 #define DEBUG false
@@ -74,12 +85,78 @@ static void *run_rtCycle(void *pParam)
 			// Input Pulse/Pulse(1rev) * Radian(1rev) / Reduction Ratio
 			jPos[i] = (((((double)m_canManager.m_Dev[i].m_ActPos)/4096.0) * (2.0 * 3.141592)) / m_canManager.m_Dev[i].m_Gear_Ratio); // Inc to Radian
 			jPos[i] = jPos[i]*(-1.0); // Convert Direction
-			printf("[%d]Actual Position : %d \r\n\n",i,m_canManager.m_Dev[i].m_ActPos);
+			// printf("[%d]Actual Position : %d \r\n\n",i,m_canManager.m_Dev[i].m_ActPos);
+			
+			// printf("[%d]rad Position : %d \r\n\n",i,jPos[i]);
 		}
 	
-		//DOB
+		//-------------CDSL_Control Field------------//
+		//1. basic settings
 
-	
+		int control_torque[2];
+		control_torque[0] = 0; control_torque[1] = 0;
+		
+		//---1-1. loop_counter
+		loop_counter++;
+		double current_time = loop_counter * 0.004;
+		printf("\npassed time(ms): %f", current_time);
+		// printf("\nfrom KIRO, passed time: %f\n", robot_time[2]);
+
+		//---1-2. numerical difference calculation
+		double theta_dot_d = 0.0;
+
+		
+
+		//2. control mode selection
+		int controlmode = ctrl_pd; // 0: Manual, 1: PD, 2: FL
+		switch (controlmode)
+		{
+		case ctrl_manual:
+			{	
+			control_torque[0] = m_manual_controller.calculateTau(0); // Example input torque
+			control_torque[1] = m_manual_controller.calculateTau(0);
+			printf("\ninput of manual controller is (%d, %d)\n", control_torque[0], control_torque[1]);
+			printf("\ncurrent joint_1 is  : %f\n", jPos[0]);
+		    printf("\ncurrent joint_2 is  : %f\n", jPos[1]);
+			break;
+			}
+		
+		case ctrl_pd:
+			{
+			double theta1_desired_d = m_reference_generator.get_position(current_time);
+			printf("\ndiscrete time reference signal : %f\n", theta1_desired_d);
+			printf("\ncurrent joint_1 is  : %f\n", jPos[0]);
+		    printf("\ncurrent joint_2 is  : %f\n", jPos[1]);
+
+			double joint_error_1 = theta1_desired_d - jPos[0];
+			double joint_error_1_dot = 0.0; // currently it's P controller
+			
+			control_torque[0] = static_cast<int>(m_PD_controller.calculateTau(0, joint_error_1, joint_error_1_dot));
+			control_torque[1] = 0; // Assuming no control for second joint in
+			printf("\ninput of pd controller is (%d, %d)\n", control_torque[0], control_torque[1]);
+			break;
+			}
+
+		case ctrl_fl:
+			{
+			control_torque[0] = 0;
+			control_torque[0] = 0;
+			printf("\ninput of FL controller is (%d, %d)\n", control_torque[0], control_torque[1]);
+			break;
+			}
+
+		default:
+			{
+			control_torque[0] = 0;
+			control_torque[1] = 0;
+			printf("\n control mode is not defined, so torque is set to 0\n");
+			break;
+			}
+		}
+
+
+		//-------------CDSL_Control Field Ends-------------//
+
 		// TX process
 		// Torque Command
 		for (int i = 0; i < MAX_DOF; i++)
@@ -96,18 +173,24 @@ static void *run_rtCycle(void *pParam)
 				printf("[%d]Target Position : %d \r\n\n",i,m_canManager.m_Dev[i].m_TargetPos);
 				break;
 				case CST: // Thousand Per Rated Torque (Rated Torque : 52.8mNm = 1000, MAXON EC-i 40)
-				m_canManager.m_Dev[i].m_TargetTrq = 0; // Input Torque
-				m_canManager.m_Dev[i].m_TargetTrq = 0; // Input Torque
+				m_canManager.m_Dev[i].m_TargetTrq = control_torque[i]; // Input Torque
+				m_canManager.m_Dev[i].m_TargetTrq = control_torque[i]; // Input Torque
 				printf("[%d]Target Torque : %d \r\n\n",i,m_canManager.m_Dev[i].m_TargetTrq);
 				break;
 			}
 			m_canManager.Send_PDO_Data(i);
 		}
 
+
 		clock_gettime(CLOCK_REALTIME, &clockCheck); // end time
 		e_time = clockCheck.tv_sec * 1000000000 + clockCheck.tv_nsec;
 		op_time = e_time - s_time;
 		
+		//what
+		// printf("\ncontrol loop calculation time: %d", op_time);
+		// printf("\nperiod_ns: %d", PInfo.period_ns);
+		//is it 
+
 		if (op_time > PInfo.period_ns)
 		{
 			RT_Timeout_Error_Flag = true;
