@@ -30,16 +30,19 @@ CCAN_Manager m_canManager;
 ManualController m_manual_controller;
 PDController m_PD_controller;
 FLController m_FL_controller;
-LowPassFilter m_low_pass_filter;
 #include "ReferenceGenerator.h"
 ReferenceGenerator m_reference_generator;
+LowPassFilter m_low_pass_filter;
+
 int loop_counter = 0;
 double theta_dot_d = 0.0;
+double theta_dot_d_filtered = 0.0;
 double jPos_prev = 0.0;
 double theta_dot_d_prev = 0.0;
-
+#include <fstream>
 //------ CDSL Controller code ------//
 
+std::ofstream output_file("cdsl_data.csv");
 
 // USER Paramter //
 #define DEBUG false
@@ -112,12 +115,15 @@ static void *run_rtCycle(void *pParam)
 			theta_dot_d = (jPos[0] - jPos_prev)/sampling_time;
 		}
 		jPos_prev = jPos[0];
-		// printf("\n current joint_1 velocity is : %f\n", theta_dot_d);
+		printf("\n current joint_1 velocity is : %f", theta_dot_d);
 
 		//---1-3. low pass filter
-		theta_dot_d = m_low_pass_filter.lowpassfilter(theta_dot_d, theta_dot_d_prev);
-		theta_dot_d_prev = theta_dot_d;
-		printf("\n current joint_1 velocity is : %f\n", theta_dot_d);
+		theta_dot_d_filtered = m_low_pass_filter.calculate_lowpass_filter(theta_dot_d, theta_dot_d_prev);
+		theta_dot_d_prev = theta_dot_d_filtered;
+		printf("\n filtered joint_1 velocity is : %f", theta_dot_d_filtered);
+
+		//csv file output
+		// output_file << jPos[0] <<"," << theta_dot_d << "," << theta_dot_d_filtered << "," << current_time  << std::endl;
 
 		//2. control mode selection
 		int controlmode = ctrl_pd; // 0: Manual, 1: PD, 2: FL
@@ -137,12 +143,15 @@ static void *run_rtCycle(void *pParam)
 			{
 			double theta1_desired_d = m_reference_generator.get_position(current_time);
 			double theta1_dot_desired_d = m_reference_generator.get_velocity(current_time);
-			printf("\ndiscrete time reference signal : %f\n", theta1_desired_d);
+			printf("\nreference theta1_dot_desired_d is : %f\n", theta1_dot_desired_d);
+			output_file << jPos[0] <<"," << theta1_dot_desired_d << "," << theta_dot_d_filtered << "," << current_time  << std::endl;
+
+			// printf("\ndiscrete time reference signal : %f\n", theta1_desired_d);
 			printf("\ncurrent joint_1 is  : %f\n", jPos[0]);
 		    // printf("\ncurrent joint_2 is  : %f\n", jPos[1]);
 
 			double joint_error_1 = theta1_desired_d - jPos[0];
-			double joint_error_1_dot = theta1_dot_desired_d - theta_dot_d; // currently it's P controller
+			double joint_error_1_dot = theta1_dot_desired_d - theta_dot_d_filtered; // currently it's P controller
 			
 			control_torque[0] = static_cast<int>(m_PD_controller.calculateTau(0, joint_error_1, joint_error_1_dot));
 			control_torque[1] = 0; // Assuming no control for second joint in
@@ -154,7 +163,7 @@ static void *run_rtCycle(void *pParam)
 			{
 			control_torque[0] = 0;
 			control_torque[0] = 0;
-			printf("\ninput of FL controller is (%d, %d)\n", control_torque[0], control_torque[1]);
+			// printf("\ninput of FL controller is (%d, %d)\n", control_torque[0], control_torque[1]);
 			break;
 			}
 
@@ -166,7 +175,6 @@ static void *run_rtCycle(void *pParam)
 			break;
 			}
 		}
-
 
 		//-------------CDSL_Control Field Ends-------------//
 
@@ -234,6 +242,9 @@ int main(int nArgc, char *ppArgv[])
 
 	// Initialize CAN Controller
 	m_canManager.Initialize(opMode);
+
+	//csv file generation
+	output_file << "joint_pos, joint_vel_desired, joint_vel_filtered, current_time" << std::endl;
 
 	//------   create thread
 	pthread_t run_rt_cannon_thread; // real time loop for cannon control
