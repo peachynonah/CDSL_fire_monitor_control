@@ -1,5 +1,9 @@
 #pragma once
 
+#define ctrl_manual 0
+#define ctrl_pd 1
+#define ctrl_fl 2
+
 class ManualController {
     public:
         ManualController();

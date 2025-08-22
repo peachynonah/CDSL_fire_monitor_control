@@ -1,8 +1,8 @@
 all : controller.cpp main.cpp
-	g++ controller.cpp main.cpp -o test
+	g++ controller.cpp main.cpp -o main
 
 start: all 
-	./test
+	./main
 
 clean:
-	rm -f test 
+	rm -f main 

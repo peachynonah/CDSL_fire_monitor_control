@@ -33,7 +33,6 @@ FLController m_FL_controller;
 #include "ReferenceGenerator.h"
 ReferenceGenerator m_reference_generator;
 
-int loop_counter;
 //------ CDSL Controller code ------//
 
 
@@ -90,44 +89,59 @@ static void *run_rtCycle(void *pParam)
 			printf("[%d]rad Position : %d \r\n\n",i,jPos[i]);
 		}
 	
-		//-------------CDSL_Control Field
+		//-------------CDSL_Control Field------------//
+		//1. basic settings
 
-		//------1. Manual Controller
-		int control_torque_manual[2];
-		control_torque_manual[0] = m_manual_controller.calculateTau(850);
-		control_torque_manual[1] = m_manual_controller.calculateTau(0);
+		int control_torque[2];
+		control_torque[0] = 0; control_torque[1] = 0;
+		
+		//---1-1. loop_counter
+		int loop_counter;
+		loop_counter++;
+		double current_time = loop_counter * 0.004;
+		printf("\npassed time(ms): %f\n", current_time);
+		printf("\nfrom KIRO, passed time: %f\n", robot_time[2]);
 
-		//------2. PD Controller
 
-			//---2-1. loop_counter
-			loop_counter++;
-			double current_time = loop_counter * 0.004;
-			// printf("Control loop count: %d\n", loop_counter);
-			printf("\npassed time(ms): %f\n", current_time);
-			printf("\nfrom KIRO, passed time: %f\n", robot_time[2]);
+		//2. control mode selection
+		int controlmode = 1; // 0: Manual, 1: PD, 2: FL
+		switch (controlmode)
+		{
+		case ctrl_manual:
+			control_torque[0] = m_manual_controller.calculateTau(850); // Example input torque
+			control_torque[1] = m_manual_controller.calculateTau(0);
+			printf("\ncontrol mode is manual\n");
+			printf("\ninput of manual controller is %d, %d)\n", control_torque[0], control_torque[1]);
+			break;
+		
+		case ctrl_pd:
 			double theta1_desired_d = m_reference_generator.get_position(current_time);
 			printf("\ndiscrete time reference signal : %f\n", theta1_desired_d);
 			printf("\ncurrent joint is  : %f\n", jPos[0]);
-		
-			//--- 2-2. Control value_PD
-			int control_torque[2];
+
 			double joint_error_1 = theta1_desired_d - jPos[0];
 			double joint_error_1_dot = 0.0; // currently it's P controller
-			control_torque[0] = 0.0;
-			control_torque[1] = 0.0;
+			
+			control_torque[0] = static_cast<int>(m_PD_controller.calculateTau(0, joint_error_1, joint_error_1_dot));
+			control_torque[1] = 0; // Assuming no control for second joint in
+			printf("\ninput of pd controller is %d, %d)\n", control_torque[0], control_torque[1]);
+			break;
 
-			double control_torque_test[2];
-			control_torque_test[0] = m_PD_controller.calculateTau(0,joint_error_1, joint_error_1_dot);
-			control_torque_test[1] = 0.0;
-			printf("\ntorque input of pd controller is %f, %f)\n", control_torque_test[0], control_torque_test[1]);
+		case ctrl_fl:
+			control_torque[0] = 0;
+			control_torque[0] = 0;
+			printf("\ninput of FL controller is %d, %d)\n", control_torque[0], control_torque[1]);
+			break;
 
-			int control_torque_test_int[2];
-			control_torque_test_int[0] = static_cast<int>(control_torque_test[0]);
-			control_torque_test_int[1] = 0;
-			printf("\nint input of pd controller is %d, %d)\n", control_torque_test_int[0], control_torque_test_int[1]);
+		default:
+			control_torque[0] = 0;
+			control_torque[1] = 0;
+			printf("\n controll mode is not defined, so torque is set to 0\n");
+			break;
+		}
 
-		//-------------CDSL_Control Field
 
+		//-------------CDSL_Control Field Ends-------------//
 
 		// TX process
 		// Torque Command
@@ -145,8 +159,8 @@ static void *run_rtCycle(void *pParam)
 				printf("[%d]Target Position : %d \r\n\n",i,m_canManager.m_Dev[i].m_TargetPos);
 				break;
 				case CST: // Thousand Per Rated Torque (Rated Torque : 52.8mNm = 1000, MAXON EC-i 40)
-				m_canManager.m_Dev[i].m_TargetTrq = control_torque_test_int[i]; // Input Torque
-				m_canManager.m_Dev[i].m_TargetTrq = control_torque_test_int[i]; // Input Torque
+				m_canManager.m_Dev[i].m_TargetTrq = control_torque[i]; // Input Torque
+				m_canManager.m_Dev[i].m_TargetTrq = control_torque[i]; // Input Torque
 				printf("[%d]Target Torque : %d \r\n\n",i,m_canManager.m_Dev[i].m_TargetTrq);
 				break;
 			}
