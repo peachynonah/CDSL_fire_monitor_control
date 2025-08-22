@@ -30,11 +30,13 @@ CCAN_Manager m_canManager;
 ManualController m_manual_controller;
 PDController m_PD_controller;
 FLController m_FL_controller;
+LowPassFilter m_low_pass_filter;
 #include "ReferenceGenerator.h"
 ReferenceGenerator m_reference_generator;
 int loop_counter = 0;
 double theta_dot_d = 0.0;
 double jPos_prev = 0.0;
+double theta_dot_d_prev = 0.0;
 
 //------ CDSL Controller code ------//
 
@@ -110,6 +112,11 @@ static void *run_rtCycle(void *pParam)
 			theta_dot_d = (jPos[0] - jPos_prev)/sampling_time;
 		}
 		jPos_prev = jPos[0];
+		// printf("\n current joint_1 velocity is : %f\n", theta_dot_d);
+
+		//---1-3. low pass filter
+		theta_dot_d = m_low_pass_filter.lowpassfilter(theta_dot_d, theta_dot_d_prev);
+		theta_dot_d_prev = theta_dot_d;
 		printf("\n current joint_1 velocity is : %f\n", theta_dot_d);
 
 		//2. control mode selection
