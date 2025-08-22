@@ -65,3 +65,15 @@ double FLController::calculateTau(int index, double joint_error, double joint_er
     return tau[index];
 }
 
+
+LowPassFilter::LowPassFilter(){
+    time_param = 0.444; // time_param = sampling_time / (time_constant + time_period) = 4ms / (4ms + 5ms)
+    unfiltered_value = 0.0;
+    filtered_value = 0.0;
+    filtered_value_prev = 0.0;
+}
+
+double LowPassFilter::lowpassfilter(double unfiltered_value, double filtered_value_prev) {
+    filtered_value = time_param * unfiltered_value + (1 - time_param) * filtered_value_prev;
+    return filtered_value;
+}//y_k = time_param * u_k + (1 - time_param) * y_k-1

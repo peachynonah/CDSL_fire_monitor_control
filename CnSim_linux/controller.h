@@ -43,3 +43,19 @@ class FLController {
         double calculateTau(int index, double joint_error, double joint_error_dot);
     
 };
+
+
+class LowPassFilter {
+    public:
+        double time_param;
+        double unfiltered_value;
+        double filtered_value;
+        double filtered_value_prev;
+        LowPassFilter();
+
+    public:
+        double lowpassfilter(double unfiltered_value, double filtered_value_prev) {
+            filtered_value = time_param * unfiltered_value + (1 - time_param) * filtered_value_prev;
+            return filtered_value;
+        }//y_k = time_param * u_k + (1 - time_param) * y_k-1
+};
