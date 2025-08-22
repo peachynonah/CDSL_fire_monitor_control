@@ -33,6 +33,8 @@ FLController m_FL_controller;
 #include "ReferenceGenerator.h"
 ReferenceGenerator m_reference_generator;
 int loop_counter = 0;
+double theta_dot_d = 0.0;
+double jPos_prev = 0.0;
 
 //------ CDSL Controller code ------//
 
@@ -102,10 +104,13 @@ static void *run_rtCycle(void *pParam)
 		printf("\npassed time(ms): %f", current_time);
 		// printf("\nfrom KIRO, passed time: %f\n", robot_time[2]);
 
-		//---1-2. numerical difference calculation
-		double theta_dot_d = 0.0;
-
-		
+		//---1-2. numerical differeince calculation
+		if (loop_counter > 1) {
+			double sampling_time = 0.004;
+			theta_dot_d = (jPos[0] - jPos_prev)/sampling_time;
+		}
+		jPos_prev = jPos[0];
+		printf("\n current joint_1 velocity is : %f\n", theta_dot_d);
 
 		//2. control mode selection
 		int controlmode = ctrl_pd; // 0: Manual, 1: PD, 2: FL
@@ -124,12 +129,13 @@ static void *run_rtCycle(void *pParam)
 		case ctrl_pd:
 			{
 			double theta1_desired_d = m_reference_generator.get_position(current_time);
+			double theta1_dot_desired_d = m_reference_generator.get_velocity(current_time);
 			printf("\ndiscrete time reference signal : %f\n", theta1_desired_d);
 			printf("\ncurrent joint_1 is  : %f\n", jPos[0]);
-		    printf("\ncurrent joint_2 is  : %f\n", jPos[1]);
+		    // printf("\ncurrent joint_2 is  : %f\n", jPos[1]);
 
 			double joint_error_1 = theta1_desired_d - jPos[0];
-			double joint_error_1_dot = 0.0; // currently it's P controller
+			double joint_error_1_dot = theta1_dot_desired_d - theta_dot_d; // currently it's P controller
 			
 			control_torque[0] = static_cast<int>(m_PD_controller.calculateTau(0, joint_error_1, joint_error_1_dot));
 			control_torque[1] = 0; // Assuming no control for second joint in
