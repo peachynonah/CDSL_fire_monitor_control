@@ -28,4 +28,5 @@ public:
 private:
     double alpha_coeffs[6];
     double time_ref_start, time_ref_fin;
+    double current_joint1_position;
 };

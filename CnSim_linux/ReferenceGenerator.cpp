@@ -6,19 +6,19 @@
 // 생성자
 ReferenceGenerator::ReferenceGenerator() {
     // //situation1
-    // time_ref_start = 0.0; time_ref_fin = 10.0;
+    // time_ref_start = 0.0; time_ref_fin = 10.0; current_joint1_position = 0.0;
     // alpha_coeffs[5] = 6.90459e-07; alpha_coeffs[4] = -0.000327968; alpha_coeffs[3] = 0.00425783619;
-    // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = 0.0;
+    // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
 
-    // //situation2: start at 0.0, finish at pi/2
-    // time_ref_start = 0.0; time_ref_fin = 30.0;
-    // alpha_coeffs[5] = 1.33282e-09; alpha_coeffs[4] = -5.89773e-06; alpha_coeffs[3] = 0.00023391;
-    // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = 0.0;
-
-    //situation3
-    time_ref_start = 0.0; time_ref_fin = 30.0;
+    //situation2: start at 0.0, finish at pi/2 : clockwise
+    time_ref_start = 0.0; time_ref_fin = 30.0; current_joint1_position = -0.24;
     alpha_coeffs[5] = 1.33282e-09; alpha_coeffs[4] = -5.89773e-06; alpha_coeffs[3] = 0.00023391;
-    alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = 0.644942;
+    alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
+
+    // //situation3: start at 0.0, finish at minus pi/2 : anticlockwise
+    // time_ref_start = 0.0; time_ref_fin = 30.0; current_joint1_position = -0.0;
+    // alpha_coeffs[5] = -1.33282e-09; alpha_coeffs[4] = 5.89773e-06; alpha_coeffs[3] = -0.00023391;
+    // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
 }
 
 
