@@ -10,13 +10,13 @@ ReferenceGenerator::ReferenceGenerator() {
     // alpha_coeffs[5] = 6.90459e-07; alpha_coeffs[4] = -0.000327968; alpha_coeffs[3] = 0.00425783619;
     // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
 
-    //situation2: start at 0.0, finish at pi/2 : clockwise
-    time_ref_start = 0.0; time_ref_fin = 30.0; current_joint1_position = -0.24;
+    //situation2: start at 0.0, finish at pi/2 : anticlockwise
+    time_ref_start = 0.0; time_ref_fin = 30.0; current_joint1_position = 0.378;
     alpha_coeffs[5] = 1.33282e-09; alpha_coeffs[4] = -5.89773e-06; alpha_coeffs[3] = 0.00023391;
     alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
 
-    // //situation3: start at 0.0, finish at minus pi/2 : anticlockwise
-    // time_ref_start = 0.0; time_ref_fin = 30.0; current_joint1_position = -0.0;
+    // //situation3: start at 0.0, finish at minus pi/2 : clockwise
+    // time_ref_start = 0.0; time_ref_fin = 30.0; current_joint1_position = 1.36;
     // alpha_coeffs[5] = -1.33282e-09; alpha_coeffs[4] = 5.89773e-06; alpha_coeffs[3] = -0.00023391;
     // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
 }
@@ -61,11 +61,11 @@ double ReferenceGenerator::get_velocity(double current_time) {
     }
     
     double t_diff = current_time - time_ref_start;
-    return 5 * alpha_coeffs[0] * std::pow(t_diff, 4) +
-           4 * alpha_coeffs[1] * std::pow(t_diff, 3) +
-           3 * alpha_coeffs[2] * std::pow(t_diff, 2) +
-           2 * alpha_coeffs[3] * t_diff +
-           alpha_coeffs[4];
+    return 5 * alpha_coeffs[5] * std::pow(t_diff, 4) +
+           4 * alpha_coeffs[4] * std::pow(t_diff, 3) +
+           3 * alpha_coeffs[3] * std::pow(t_diff, 2) +
+           2 * alpha_coeffs[2] * t_diff +
+           alpha_coeffs[1];
 }
 
 // 3. desired reference accleration at current time
@@ -75,8 +75,8 @@ double ReferenceGenerator::get_acceleration(double current_time) {
     }
     
     double t_diff = current_time - time_ref_start;
-    return 20 * alpha_coeffs[0] * std::pow(t_diff, 3) +
-           12 * alpha_coeffs[1] * std::pow(t_diff, 2) +
-           6 * alpha_coeffs[2] * t_diff +
-           2 * alpha_coeffs[3];
+    return 20 * alpha_coeffs[5] * std::pow(t_diff, 3) +
+           12 * alpha_coeffs[4] * std::pow(t_diff, 2) +
+           6 * alpha_coeffs[3] * t_diff +
+           2 * alpha_coeffs[2];
 }

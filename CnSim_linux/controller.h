@@ -54,8 +54,5 @@ class LowPassFilter {
         LowPassFilter();
 
     public:
-        double lowpassfilter(double unfiltered_value, double filtered_value_prev) {
-            filtered_value = time_param * unfiltered_value + (1 - time_param) * filtered_value_prev;
-            return filtered_value;
-        }//y_k = time_param * u_k + (1 - time_param) * y_k-1
+        double calculate_lowpass_filter(double unfiltered_value, double filtered_value_prev);
 };
