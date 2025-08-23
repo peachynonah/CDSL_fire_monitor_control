@@ -115,7 +115,7 @@ static void *run_rtCycle(void *pParam)
 			theta_dot_d = (jPos[0] - jPos_prev)/sampling_time;
 		}
 		jPos_prev = jPos[0];
-		printf("\n current joint_1 velocity is : %f", theta_dot_d);
+		// printf("\n current joint_1 velocity is : %f", theta_dot_d);
 
 		//---1-3. low pass filter
 		theta_dot_d_filtered = m_low_pass_filter.calculate_lowpass_filter(theta_dot_d, theta_dot_d_prev);
@@ -133,9 +133,9 @@ static void *run_rtCycle(void *pParam)
 			{	
 			control_torque[0] = m_manual_controller.calculateTau(0); // Example input torque
 			control_torque[1] = m_manual_controller.calculateTau(0);
-			printf("\ninput of manual controller is (%d, %d)\n", control_torque[0], control_torque[1]);
+			// printf("\ninput of manual controller is (%d, %d)\n", control_torque[0], control_torque[1]);
 			printf("\ncurrent joint_1 is  : %f\n", jPos[0]);
-		    printf("\ncurrent joint_2 is  : %f\n", jPos[1]);
+		    // printf("\ncurrent joint_2 is  : %f\n", jPos[1]);
 			break;
 			}
 		
@@ -143,8 +143,8 @@ static void *run_rtCycle(void *pParam)
 			{
 			double theta1_desired_d = m_reference_generator.get_position(current_time);
 			double theta1_dot_desired_d = m_reference_generator.get_velocity(current_time);
+			printf("\nreference theta1_desired_d is : %f", theta1_desired_d);
 			printf("\nreference theta1_dot_desired_d is : %f\n", theta1_dot_desired_d);
-			output_file << jPos[0] <<"," << theta1_dot_desired_d << "," << theta_dot_d_filtered << "," << current_time  << std::endl;
 
 			// printf("\ndiscrete time reference signal : %f\n", theta1_desired_d);
 			printf("\ncurrent joint_1 is  : %f\n", jPos[0]);
@@ -156,6 +156,17 @@ static void *run_rtCycle(void *pParam)
 			control_torque[0] = static_cast<int>(m_PD_controller.calculateTau(0, joint_error_1, joint_error_1_dot));
 			control_torque[1] = 0; // Assuming no control for second joint in
 			printf("\ninput of pd controller is (%d, %d)\n", control_torque[0], control_torque[1]);
+			
+			// derivate term debugging
+			double propo_term_torque = m_PD_controller.tauPropo(0, joint_error_1);
+			double deriv_term_torque = m_PD_controller.tauDeriv(0, joint_error_1_dot);
+
+			// csv file output writing
+			output_file << theta1_desired_d <<"," <<jPos[0] <<"," 
+					    << theta1_dot_desired_d << "," << theta_dot_d_filtered << "," 
+						<< control_torque[0] << ","
+						<< propo_term_torque << "," << deriv_term_torque << "," 
+						<< current_time  << std::endl;
 			break;
 			}
 
@@ -196,7 +207,7 @@ static void *run_rtCycle(void *pParam)
 				case CST: // Thousand Per Rated Torque (Rated Torque : 52.8mNm = 1000, MAXON EC-i 40)
 				m_canManager.m_Dev[i].m_TargetTrq = control_torque[i]; // Input Torque
 				m_canManager.m_Dev[i].m_TargetTrq = control_torque[i]; // Input Torque
-				printf("[%d]Target Torque : %d \r\n\n",i,m_canManager.m_Dev[i].m_TargetTrq);
+				printf("[%d]Target Torque : %d \r\n",i,m_canManager.m_Dev[i].m_TargetTrq);
 				break;
 			}
 			m_canManager.Send_PDO_Data(i);
@@ -244,7 +255,7 @@ int main(int nArgc, char *ppArgv[])
 	m_canManager.Initialize(opMode);
 
 	//csv file generation
-	output_file << "joint_pos, joint_vel_desired, joint_vel_filtered, current_time" << std::endl;
+	output_file << "joint_pos_desired, joint_pos, joint_vel_desired, joint_vel_filtered, target_torque, propo_term_torque, deriv_term_torque, current_time" << std::endl;
 
 	//------   create thread
 	pthread_t run_rt_cannon_thread; // real time loop for cannon control
