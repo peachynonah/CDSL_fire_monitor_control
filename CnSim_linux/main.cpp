@@ -35,10 +35,10 @@ ReferenceGenerator m_reference_generator;
 LowPassFilter m_low_pass_filter;
 
 int loop_counter = 0;
-double theta_dot_d = 0.0;
-double theta_dot_d_filtered = 0.0;
-double jPos_prev = 0.0;
-double theta_dot_d_prev = 0.0;
+double theta1_dot_d = 0.0; double theta2_dot_d = 0.0;
+double theta1_dot_d_filtered = 0.0; double theta2_dot_d_filtered = 0.0;
+double jPos1_prev = 0.0; double jPos2_prev = 0.0;
+double theta1_dot_d_prev = 0.0; double theta2_dot_d_prev = 0.0;
 #include <fstream>
 //------ CDSL Controller code ------//
 
@@ -112,21 +112,45 @@ static void *run_rtCycle(void *pParam)
 		//---1-2. numerical differeince calculation
 		if (loop_counter > 1) {
 			double sampling_time = 0.004;
-			theta_dot_d = (jPos[0] - jPos_prev)/sampling_time;
+			theta1_dot_d = (jPos[0] - jPos1_prev)/sampling_time;
+			theta2_dot_d = (jPos[1] - jPos2_prev)/sampling_time;
 		}
-		jPos_prev = jPos[0];
+		jPos1_prev = jPos[0];  jPos2_prev = jPos[1];
 		// printf("\n current joint_1 velocity is : %f", theta_dot_d);
 
 		//---1-3. low pass filter
-		theta_dot_d_filtered = m_low_pass_filter.calculate_lowpass_filter(theta_dot_d, theta_dot_d_prev);
-		theta_dot_d_prev = theta_dot_d_filtered;
-		printf("\n filtered joint_1 velocity is : %f", theta_dot_d_filtered);
+		theta1_dot_d_filtered = m_low_pass_filter.calculate_lowpass_filter(theta1_dot_d, theta1_dot_d_prev);
+		theta1_dot_d_prev = theta1_dot_d_filtered;
+		printf("\n filtered joint_1 velocity is : %f", theta1_dot_d_filtered);
 
-		//csv file output
-		// output_file << jPos[0] <<"," << theta_dot_d << "," << theta_dot_d_filtered << "," << current_time  << std::endl;
+		theta2_dot_d_filtered = m_low_pass_filter.calculate_lowpass_filter(theta2_dot_d, theta2_dot_d_prev);
+		theta2_dot_d_prev = theta2_dot_d_filtered;
+		printf("\n filtered joint_1 velocity is : %f", theta2_dot_d_filtered);
 
-		//2. control mode selection
-		int controlmode = ctrl_pd; // 0: Manual, 1: PD, 2: FL
+		//2. reference generation
+		double theta1_desired_d = m_reference_generator.get_position(current_time);
+		double theta1_dot_desired_d = m_reference_generator.get_velocity(current_time);
+		double theta1_ddot_desired_d = m_reference_generator.get_acceleration(current_time);
+
+		double theta2_desired_d = m_reference_generator.get_position(current_time);
+		double theta2_dot_desired_d = m_reference_generator.get_velocity(current_time);
+
+		printf("\nreference theta2_desired_d is : %f", theta2_desired_d);
+		printf("\nreference theta2_dot_desired_d is : %f\n", theta2_dot_desired_d);
+		printf("\ncurrent joint_1 is  : %f\n", jPos[0]);
+		printf("\ncurrent joint_2 is  : %f\n", jPos[1]);
+
+		//---2-1. position, velocity error define
+		double joint_error_1 = theta1_desired_d - jPos[0];
+		double joint_error_1_dot = theta1_dot_desired_d - theta1_dot_d_filtered; 
+
+		double joint_error_2 = theta2_desired_d - jPos[1];
+		double joint_error_2_dot = theta2_dot_desired_d - theta2_dot_d_filtered; 
+
+
+
+		//3. control mode selection
+		int controlmode = ctrl_fl; // 0: Manual, 1: PD, 2: FL, 3: FL + DOB
 		switch (controlmode)
 		{
 		case ctrl_manual:
@@ -134,27 +158,13 @@ static void *run_rtCycle(void *pParam)
 			control_torque[0] = m_manual_controller.calculateTau(0); // Example input torque
 			control_torque[1] = m_manual_controller.calculateTau(0);
 			// printf("\ninput of manual controller is (%d, %d)\n", control_torque[0], control_torque[1]);
-			printf("\ncurrent joint_1 is  : %f\n", jPos[0]);
-		    // printf("\ncurrent joint_2 is  : %f\n", jPos[1]);
 			break;
 			}
 		
 		case ctrl_pd:
 			{
-			double theta1_desired_d = m_reference_generator.get_position(current_time);
-			double theta1_dot_desired_d = m_reference_generator.get_velocity(current_time);
-			printf("\nreference theta1_desired_d is : %f", theta1_desired_d);
-			printf("\nreference theta1_dot_desired_d is : %f\n", theta1_dot_desired_d);
-
-			// printf("\ndiscrete time reference signal : %f\n", theta1_desired_d);
-			printf("\ncurrent joint_1 is  : %f\n", jPos[0]);
-		    // printf("\ncurrent joint_2 is  : %f\n", jPos[1]);
-
-			double joint_error_1 = theta1_desired_d - jPos[0];
-			double joint_error_1_dot = theta1_dot_desired_d - theta_dot_d_filtered; // currently it's P controller
-			
 			control_torque[0] = static_cast<int>(m_PD_controller.calculateTau(0, joint_error_1, joint_error_1_dot));
-			control_torque[1] = 0; // Assuming no control for second joint in
+			control_torque[1] = 0.0; // static_cast<int>(m_PD_controller.calculateTau(1, joint_error_2, joint_error_2_dot)); 
 			printf("\ninput of pd controller is (%d, %d)\n", control_torque[0], control_torque[1]);
 			
 			// derivate term debugging
@@ -163,7 +173,7 @@ static void *run_rtCycle(void *pParam)
 
 			// csv file output writing
 			output_file << theta1_desired_d <<"," <<jPos[0] <<"," 
-					    << theta1_dot_desired_d << "," << theta_dot_d_filtered << "," 
+					    << theta1_dot_desired_d << "," << theta1_dot_d_filtered << "," 
 						<< control_torque[0] << ","
 						<< propo_term_torque << "," << deriv_term_torque << "," 
 						<< current_time  << std::endl;
@@ -171,6 +181,20 @@ static void *run_rtCycle(void *pParam)
 			}
 
 		case ctrl_fl:
+			{
+			double global_theta_2_fixed = 0.0;
+			control_torque[0] = m_FL_controller.calculateTau(0, theta1_ddot_desired_d, joint_error_1, joint_error_1_dot,
+                                 							 jPos[0], global_theta_2_fixed, 
+															 theta1_dot_d_filtered, theta2_dot_d_filtered);
+			control_torque[1] = m_FL_controller.calculateTau(1, theta1_ddot_desired_d, joint_error_1, joint_error_1_dot,
+                                 							 jPos[0], global_theta_2_fixed, 
+															 theta1_dot_d_filtered, theta2_dot_d_filtered);;
+			// printf("\ninput of FL controller is (%d, %d)\n", control_torque[0], control_torque[1]);
+			break;
+			}
+
+
+		case ctrl_fl_dob:
 			{
 			control_torque[0] = 0;
 			control_torque[0] = 0;
@@ -186,6 +210,7 @@ static void *run_rtCycle(void *pParam)
 			break;
 			}
 		}
+		
 
 		//-------------CDSL_Control Field Ends-------------//
 
