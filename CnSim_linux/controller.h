@@ -4,6 +4,8 @@
 #define ctrl_pd 1
 #define ctrl_fl 2
 
+#define MM_to_M 1e-3
+
 class ManualController {
     public:
         ManualController();
@@ -46,6 +48,15 @@ class FLController {
     public:
         double calculateTau(int index, double joint_error, double joint_error_dot);
     
+    public:
+        //Robot properties
+        double DH_param_dist[2];
+        double link_mass[2];
+        double com_x[2];
+        double com_y[2];
+        double com_z[2];
+        double mass_matrix[2][2];
+        double nonlinear_dynamics_term[2];
 };
 
 
