@@ -1,9 +1,10 @@
 # include <iostream>
 # include "controller.h"
-# include <cmath>
-
+# include "model_dynamics.h"
+# include <vector>
 using namespace std;
 
+ModelDynamics m_model_dynamics;
 
 // functions
 int torque_saturate(int torque, int max_torque_norm) {
@@ -40,14 +41,14 @@ int ManualController::calculateTau(int input_tau) {
 
 PDController::PDController() {
     // Initialize gains
-    Kp_PD[0] = 1100.0; Kp_PD[1] = 0.0; // -1020 is quite good P gain
-    Kd_PD[0] = 3000.0; Kd_PD[1] = 0.0;
+    Kp_PD[0] = 1100.0; Kp_PD[1] = 9000.0; 
+    Kd_PD[0] = 3000.0; Kd_PD[1] = 1000.0; 
 }
 
 double PDController::calculateTau(int index, double joint_error, double joint_error_dot) {
     tau[index] = Kp_PD[index] * joint_error + Kd_PD[index] * joint_error_dot;
     // printf("\nin controller, generated torque is  : %f\n", tau[index]);
-    tau[index] = - torque_saturate(tau[index], 990);    
+    tau[index] = - torque_saturate(tau[index], 2500);    
     return tau[index];
 }
 
@@ -67,45 +68,58 @@ double PDController::tauDeriv(int index, double joint_error_dot) {
 }
 
 
+
+
+
+
+
+
+
 FLController::FLController() {
     // Initialize gains
-    Kp_FL[0] = 1.0; Kp_FL[1] = 1.0;
-    Kd_FL[0] = 0.1; Kd_FL[1] = 0.1;
-
-    // Robot properties
-    DH_param_dist[0] = 83.7*MM_to_M; DH_param_dist[1] = 291*MM_to_M; // meters
-    Link_mass[0] = 0.0; Link_mass[1] = 0.0; // kg
-    com_x[0] = 0.0; com_x[1] = 0.0; // meters
-    com_y[0] = 0.0; com_y[1] = 0.0; // meters
-    com_z[0] = 0.0; com_z[1] = 0.0; // meters
-    mass_matrix[0][0] = 0.0; mass_matrix[0][1] = 0.0;
-    mass_matrix[1][0] = 0.0; mass_matrix[1][1] = 0.0;
-    nonlinear_dynamics_term[0] = 0.0; nonlinear_dynamics_term[1] = 0.0;
-
+    Kp_FL[0] = 0.01; Kp_FL[1] = 0.01;
+    Kd_FL[0] = 0.001; Kd_FL[1] = 0.001;
 }
 
-double FLController::calculateTau(int index, double joint_error, double joint_error_dot, 
-                                  double theta1, double theta2, double theta1_dot, double theta2_dot) {
+double FLController::calculateTau(int index, double theta1_ddot_desired_d, double joint_error, double joint_error_dot, 
+                                  double theta1, double theta2, double theta1_dot, double theta2_dot){
     tau[index] = 0.0;
-
-    //redefine robot properties
-    double d1 = DH_param_dist[0]; double d2 = DH_param_dist[1];
-    double m1 = Link_mass[0]; double m2 = Link_mass[1];
-    double c1 = std::cos(theta1); double s1 = std::sin(theta1);
-    double c2 = std::cos(theta2); double s2 = std::sin(theta2);
+    //ModelReference: This is a placeholder for FL controller's tau calculation
+    std::vector<double> mass_matrix = m_model_dynamics.get_mass_matrix(theta1, theta2);
+    double m11 = mass_matrix[0]; double m12 = mass_matrix[1]; 
+    double m21 = mass_matrix[2]; double m22 = mass_matrix[3]; 
+    printf("\nin FL controller, the mass matrix {m11, m12, m21, m22 is}: (%f, %f, %f, %f)\n", m11, m12, m21, m22);	
     
-    //ModelReference: This is a placeholder for the model based feedback linearization tau calculation
-    mass_matrix[0][0] = m2 * std::pow(d2, 2) 
-                        + m1 * (std::pow(com_x[0], 2) + std::pow(com_y[0], 2)) 
-                        + m2 * (std::pow(com_y[1], 2) + std::pow(com_z[1], 2))
-                        + m2 * std::pow(c2, 2) * (std::pow(com_x[1], 2) - std::pow(com_y[1], 2))
-                        + 2 * d2 * m2 * com_z[1] 
-                        - 2 * m2 * com_x[1] * com_y[1] * s2;
+    std::vector<double> nonlinear_dynamics_term = m_model_dynamics.get_nonlinear_dynamics(theta1, theta2, theta1_dot, theta2_dot);
+    double h1 = nonlinear_dynamics_term[0];
+    double h2 = nonlinear_dynamics_term[1];
+    printf("\nin FL controller, the nonlinear term h {h1, h2 is}: (%f, %f)\n", h1, h2);
 
+    //temp..
+    double joint2_error = 0.0; double joint2_error_dot = 0.0; double theta2_ddot_desired_d = 0.0;
+    double temp1 = theta1_ddot_desired_d + Kp_FL[0] * joint_error + Kd_FL[0] * joint_error_dot;
+    double temp2 = theta2_ddot_desired_d + Kp_FL[1] * joint2_error + Kd_FL[1] * joint2_error_dot;
+    tau[0] = m11 * (temp1) + m12 * (temp2) + h1; // Nm
+    tau[1] = h2;
 
-    tau[index] = torque_saturate(tau[index], 990);
+    tau[index] = 1e3* tau[index]; // mNm
+    tau[index] = static_cast<int>((1e3 / 52.8)* tau[index]); // Thousand Per Rated Torque
+    printf("\nin FL controller, generated torque {tau[%d]} is: (%f)\n", index, tau[index]);
+    tau[index] = - torque_saturate(tau[index], 0);
     return tau[index];
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 LowPassFilter::LowPassFilter(){

@@ -5,9 +5,14 @@
 
 // 생성자
 ReferenceGenerator::ReferenceGenerator() {
-    // //situation1
-    // time_ref_start = 0.0; time_ref_fin = 10.0; current_joint1_position = 0.0;
-    // alpha_coeffs[5] = 6.90459e-07; alpha_coeffs[4] = -0.000327968; alpha_coeffs[3] = 0.00425783619;
+    // //situation1: for joint 2.
+    // time_ref_start = 0.0; time_ref_fin = 10.0; current_joint1_position = -0.39;
+    // alpha_coeffs[5] = 1.7261498e-07; alpha_coeffs[4] = -8.199212e-05; alpha_coeffs[3] = +0.001064459;
+    // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
+
+    // //situation1: for joint 2.
+    // time_ref_start = 0.0; time_ref_fin = 10.0; current_joint1_position = -0.10;
+    // alpha_coeffs[5] = -2.30153307e-07; alpha_coeffs[4] = 0.00010932282; alpha_coeffs[3] = -0.0014192787;
     // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
 
     /////////
@@ -22,17 +27,15 @@ ReferenceGenerator::ReferenceGenerator() {
     // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
 
     ////////////
-
-
-    //situation4: start at 0.0, finish at pi/2 : anticlockwise
-    time_ref_start = 0.0; time_ref_fin = 10.0; current_joint1_position = -0.413;
-    alpha_coeffs[5] = 1.035690e-06; alpha_coeffs[4] = -0.0004919527; alpha_coeffs[3] = 0.00638675;
-    alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
-
-    // //situation5: start at 0.0, finish at minus pi/2 : clockwise
+    // //situation4: start at 0.0, finish at pi/2 : anticlockwise
     // time_ref_start = 0.0; time_ref_fin = 10.0; current_joint1_position = -0.413;
-    // alpha_coeffs[5] = -1.035690e-06; alpha_coeffs[4] = 0.0004919527; alpha_coeffs[3] = -0.00638675;
+    // alpha_coeffs[5] = 1.035690e-06; alpha_coeffs[4] = -0.0004919527; alpha_coeffs[3] = 0.00638675;
     // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
+
+    //situation5: start at 0.0, finish at minus pi/2 : clockwise
+    time_ref_start = 0.0; time_ref_fin = 10.0; current_joint1_position = 0.0;
+    alpha_coeffs[5] = -1.035690e-06; alpha_coeffs[4] = 0.0004919527; alpha_coeffs[3] = -0.00638675;
+    alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
 
 
 }

@@ -3,8 +3,8 @@
 #define ctrl_manual 0
 #define ctrl_pd 1
 #define ctrl_fl 2
+#define ctrl_fl_dob 3
 
-#define MM_to_M 1e-3
 
 class ManualController {
     public:
@@ -46,17 +46,11 @@ class FLController {
         double error[2];
 
     public:
-        double calculateTau(int index, double joint_error, double joint_error_dot);
+        // double calculateTau(int index, double joint_error, double joint_error_dot);
+        double calculateTau(int index, double theta1_ddot_desired_d, double joint_error, double joint_error_dot, 
+                                  double theta1, double theta2, double theta1_dot, double theta2_dot);
+        
     
-    public:
-        //Robot properties
-        double DH_param_dist[2];
-        double link_mass[2];
-        double com_x[2];
-        double com_y[2];
-        double com_z[2];
-        double mass_matrix[2][2];
-        double nonlinear_dynamics_term[2];
 };
 
 
