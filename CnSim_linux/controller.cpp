@@ -1,6 +1,6 @@
 # include <iostream>
 # include "controller.h"
-
+# include <cmath>
 
 using namespace std;
 
@@ -71,11 +71,38 @@ FLController::FLController() {
     // Initialize gains
     Kp_FL[0] = 1.0; Kp_FL[1] = 1.0;
     Kd_FL[0] = 0.1; Kd_FL[1] = 0.1;
+
+    // Robot properties
+    DH_param_dist[0] = 83.7*MM_to_M; DH_param_dist[1] = 291*MM_to_M; // meters
+    Link_mass[0] = 0.0; Link_mass[1] = 0.0; // kg
+    com_x[0] = 0.0; com_x[1] = 0.0; // meters
+    com_y[0] = 0.0; com_y[1] = 0.0; // meters
+    com_z[0] = 0.0; com_z[1] = 0.0; // meters
+    mass_matrix[0][0] = 0.0; mass_matrix[0][1] = 0.0;
+    mass_matrix[1][0] = 0.0; mass_matrix[1][1] = 0.0;
+    nonlinear_dynamics_term[0] = 0.0; nonlinear_dynamics_term[1] = 0.0;
+
 }
 
-double FLController::calculateTau(int index, double joint_error, double joint_error_dot) {
-    //ModelReference: This is a placeholder for the fuzzy logic controller's tau calculation
+double FLController::calculateTau(int index, double joint_error, double joint_error_dot, 
+                                  double theta1, double theta2, double theta1_dot, double theta2_dot) {
     tau[index] = 0.0;
+
+    //redefine robot properties
+    double d1 = DH_param_dist[0]; double d2 = DH_param_dist[1];
+    double m1 = Link_mass[0]; double m2 = Link_mass[1];
+    double c1 = std::cos(theta1); double s1 = std::sin(theta1);
+    double c2 = std::cos(theta2); double s2 = std::sin(theta2);
+    
+    //ModelReference: This is a placeholder for the model based feedback linearization tau calculation
+    mass_matrix[0][0] = m2 * std::pow(d2, 2) 
+                        + m1 * (std::pow(com_x[0], 2) + std::pow(com_y[0], 2)) 
+                        + m2 * (std::pow(com_y[1], 2) + std::pow(com_z[1], 2))
+                        + m2 * std::pow(c2, 2) * (std::pow(com_x[1], 2) - std::pow(com_y[1], 2))
+                        + 2 * d2 * m2 * com_z[1] 
+                        - 2 * m2 * com_x[1] * com_y[1] * s2;
+
+
     tau[index] = torque_saturate(tau[index], 990);
     return tau[index];
 }
