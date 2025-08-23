@@ -22,10 +22,14 @@ class PDController {
         PDController();
         
         double tau[2];
+        double tau_propo[2];
+        double tau_deriv[2];
         double error[2];
 
     public:
         double calculateTau(int index, double joint_error, double joint_error_dot);
+        double tauPropo(int index, double joint_error);
+        double tauDeriv(int index, double joint_error_dot);
     
 };
 

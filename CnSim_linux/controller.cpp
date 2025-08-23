@@ -40,15 +40,30 @@ int ManualController::calculateTau(int input_tau) {
 
 PDController::PDController() {
     // Initialize gains
-    Kp_PD[0] = -920.0; Kp_PD[1] = 50.0; // -1020 is quite good P gain
-    Kd_PD[0] = 0.00; Kd_PD[1] = 5.0;
+    Kp_PD[0] = 1100.0; Kp_PD[1] = 0.0; // -1020 is quite good P gain
+    Kd_PD[0] = 3000.0; Kd_PD[1] = 0.0;
 }
 
 double PDController::calculateTau(int index, double joint_error, double joint_error_dot) {
     tau[index] = Kp_PD[index] * joint_error + Kd_PD[index] * joint_error_dot;
     // printf("\nin controller, generated torque is  : %f\n", tau[index]);
-    tau[index] = torque_saturate(tau[index], 990);    
+    tau[index] = - torque_saturate(tau[index], 990);    
     return tau[index];
+}
+
+//to develop
+double PDController::tauPropo(int index, double joint_error) {
+    tau_propo[index] = Kp_PD[index] * joint_error;
+    // printf("\nin controller, generated torque is  : %f\n", tau[index]);
+    tau_propo[index] = - torque_saturate(tau_propo[index], 990);    
+    return tau_propo[index];
+}
+
+double PDController::tauDeriv(int index, double joint_error_dot) {
+    tau_deriv[index] = Kd_PD[index] * joint_error_dot;
+    // printf("\nin controller, generated torque is  : %f\n", tau[index]);
+    tau_deriv[index] = - torque_saturate(tau_deriv[index], 990);    
+    return tau_deriv[index];
 }
 
 
