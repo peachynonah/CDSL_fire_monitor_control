@@ -15,7 +15,8 @@ class ModelDynamics {
         double com_y[2];
         double com_z[2];
         double grav_acc;
-
+        double L_2;
+        double x21, y21, z21;
         double mass_matrix[2][2];
         double nonlinear_dynamics_term[2];
 
