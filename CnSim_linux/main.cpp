@@ -189,7 +189,20 @@ static void *run_rtCycle(void *pParam)
 			control_torque[1] = m_FL_controller.calculateTau(1, theta1_ddot_desired_d, joint_error_1, joint_error_1_dot,
                                  							 jPos[0], global_theta_2_fixed, 
 															 theta1_dot_d_filtered, theta2_dot_d_filtered);;
-			// printf("\ninput of FL controller is (%d, %d)\n", control_torque[0], control_torque[1]);
+			printf("\ninput of FL controller in main is (%d, %d)\n", control_torque[0], control_torque[1]);
+
+			
+			// derivate term debugging
+			double propo_term_torque = m_FL_controller.tauPropo(0, joint_error_1);
+			double deriv_term_torque = m_FL_controller.tauDeriv(0, joint_error_1_dot);
+
+			// csv file output writing
+			output_file << theta1_desired_d <<"," <<jPos[0] <<"," 
+					    << theta1_dot_desired_d << "," << theta1_dot_d_filtered << "," 
+						<< control_torque[0] << ","
+						<< propo_term_torque << "," << deriv_term_torque << "," 
+						<< current_time  << std::endl;
+
 			break;
 			}
 
@@ -279,7 +292,7 @@ int main(int nArgc, char *ppArgv[])
 	// Initialize CAN Controller
 	m_canManager.Initialize(opMode);
 
-	//csv file generation
+	//csv file generation for PD 
 	output_file << "joint_pos_desired, joint_pos, joint_vel_desired, joint_vel_filtered, target_torque, propo_term_torque, deriv_term_torque, current_time" << std::endl;
 
 	//------   create thread

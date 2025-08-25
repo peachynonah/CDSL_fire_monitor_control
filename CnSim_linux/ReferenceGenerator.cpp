@@ -27,17 +27,29 @@ ReferenceGenerator::ReferenceGenerator() {
     // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
 
     ////////////
-    // //situation4: start at 0.0, finish at pi/2 : anticlockwise
-    // time_ref_start = 0.0; time_ref_fin = 10.0; current_joint1_position = -0.413;
+    // // //situation4: start at 0.0, finish at pi/2 : anticlockwise
+    // time_ref_start = 0.0; time_ref_fin = 10.0; current_joint1_position = -1.268160;
     // alpha_coeffs[5] = 1.035690e-06; alpha_coeffs[4] = -0.0004919527; alpha_coeffs[3] = 0.00638675;
     // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
 
-    //situation5: start at 0.0, finish at minus pi/2 : clockwise
-    time_ref_start = 0.0; time_ref_fin = 10.0; current_joint1_position = 0.0;
-    alpha_coeffs[5] = -1.035690e-06; alpha_coeffs[4] = 0.0004919527; alpha_coeffs[3] = -0.00638675;
+    // situation5: start at 0.0, finish at minus pi/2 : clockwise
+    // time_ref_start = 0.0; time_ref_fin = 10.0; current_joint1_position = 0.206191;
+    // alpha_coeffs[5] = -1.035690e-06; alpha_coeffs[4] = 0.0004919527; alpha_coeffs[3] = -0.00638675;
+    // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
+
+    // //////////// Bit slower.......
+    // //situation6: start at 0.0, finish at pi/2 : anticlockwise
+    // time_ref_start = 0.0; time_ref_fin = 17.0; current_joint1_position = -1.4860;
+    // alpha_coeffs[5] = 4.1228795256e-08; alpha_coeffs[4] = -5.7823385e-05; alpha_coeffs[3] = 0.0012908048;
+    // alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
+
+    //situation7: start at 0.0, finish at minus pi/2 : clockwise
+    time_ref_start = 0.0; time_ref_fin = 17.0; current_joint1_position = 0.0;
+    alpha_coeffs[5] = -4.1228795256e-08; alpha_coeffs[4] = 5.7823385e-05; alpha_coeffs[3] = -0.0012908048;
     alpha_coeffs[2] = 0.0; alpha_coeffs[1] = 0.0; alpha_coeffs[0] = current_joint1_position;
 
-
+// sudo mv /home/kiro/workspace/CnSim_linux/cdsl_data.csv /home/kiro/CDSL/CDSL_f
+// ire_monitor_control/csv_datas/trial3/cdsl_data_t3_12.csv
 }
 
 
