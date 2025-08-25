@@ -14,7 +14,9 @@ ModelDynamics::ModelDynamics() {
     // com_z[0] = 170.935*MM_to_M; com_z[1] = 0.071*MM_to_M; // meters
     x21 = -22.521*MM_to_M; y21 = -120.065*MM_to_M; z21 = 0.0;
     L_2 = 273.091 * MM_to_M; // meters
-    grav_acc = 9.8; // meter / second^2
+    // grav_acc = 9.8; // meter / second^2
+    grav_acc = 0.0; // meter / second^2
+
 
     //Initialize dynamics terms
     mass_matrix[0][0] = 0.0; mass_matrix[0][1] = 0.0;
@@ -53,7 +55,7 @@ std::vector<double> ModelDynamics::get_nonlinear_dynamics(double theta1, double 
 
     nonlinear_dynamics_term[0] = - std::pow(L_2, 2) * m2 * std::sin(2*theta2) * theta1_dot * theta2_dot;
     nonlinear_dynamics_term[1] = 0.5 * std::pow(L_2, 2) * m2 * std::sin(2*theta2) * std::pow(theta1_dot, 2) 
-                                 + L2 * grav_acc *m2 * std::cos(theta2);
+                                 + L_2 * grav_acc *m2 * std::cos(theta2);
     return {nonlinear_dynamics_term[0], nonlinear_dynamics_term[1]};
 }   
 

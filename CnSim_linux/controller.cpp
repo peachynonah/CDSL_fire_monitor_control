@@ -41,14 +41,14 @@ int ManualController::calculateTau(int input_tau) {
 
 PDController::PDController() {
     // Initialize gains
-    Kp_PD[0] = 1100.0; Kp_PD[1] = 9000.0; 
-    Kd_PD[0] = 3000.0; Kd_PD[1] = 1000.0; 
+    Kp_PD[0] = 5500.0; Kp_PD[1] = 0.0; 
+    Kd_PD[0] = 3500.0; Kd_PD[1] = 0.0; 
 }
 
 double PDController::calculateTau(int index, double joint_error, double joint_error_dot) {
     tau[index] = Kp_PD[index] * joint_error + Kd_PD[index] * joint_error_dot;
-    // printf("\nin controller, generated torque is  : %f\n", tau[index]);
-    tau[index] = - torque_saturate(tau[index], 2500);    
+    printf("\nin controller, generated torque is  : %f\n", tau[index]);
+    tau[index] = - torque_saturate(tau[index], 2700);    
     return tau[index];
 }
 
@@ -56,29 +56,22 @@ double PDController::calculateTau(int index, double joint_error, double joint_er
 double PDController::tauPropo(int index, double joint_error) {
     tau_propo[index] = Kp_PD[index] * joint_error;
     // printf("\nin controller, generated torque is  : %f\n", tau[index]);
-    tau_propo[index] = - torque_saturate(tau_propo[index], 990);    
+    tau_propo[index] = - torque_saturate(tau_propo[index], 2700);    
     return tau_propo[index];
 }
 
 double PDController::tauDeriv(int index, double joint_error_dot) {
     tau_deriv[index] = Kd_PD[index] * joint_error_dot;
     // printf("\nin controller, generated torque is  : %f\n", tau[index]);
-    tau_deriv[index] = - torque_saturate(tau_deriv[index], 990);    
+    tau_deriv[index] = - torque_saturate(tau_deriv[index], 2700);    
     return tau_deriv[index];
 }
 
 
-
-
-
-
-
-
-
 FLController::FLController() {
     // Initialize gains
-    Kp_FL[0] = 0.01; Kp_FL[1] = 0.01;
-    Kd_FL[0] = 0.001; Kd_FL[1] = 0.001;
+    Kp_FL[0] = 0.3; Kp_FL[1] = 0.0;
+    Kd_FL[0] = 0.03; Kd_FL[1] = 0.0;
 }
 
 double FLController::calculateTau(int index, double theta1_ddot_desired_d, double joint_error, double joint_error_dot, 
@@ -105,12 +98,25 @@ double FLController::calculateTau(int index, double theta1_ddot_desired_d, doubl
     tau[index] = 1e3* tau[index]; // mNm
     tau[index] = static_cast<int>((1e3 / 52.8)* tau[index]); // Thousand Per Rated Torque
     printf("\nin FL controller, generated torque {tau[%d]} is: (%f)\n", index, tau[index]);
-    tau[index] = - torque_saturate(tau[index], 0);
+    tau[index] = - torque_saturate(tau[index], 1300);
     return tau[index];
 }
 
 
+//to develop
+double FLController::tauPropo(int index, double joint_error) {
+    tau_propo[index] = 0.0;
+    // printf("\nin controller, generated torque is  : %f\n", tau[index]);
+    tau_propo[index] = - torque_saturate(tau_propo[index], 2700);    
+    return tau_propo[index];
+}
 
+double FLController::tauDeriv(int index, double joint_error_dot) {
+    tau_deriv[index] = 0.0;
+    // printf("\nin controller, generated torque is  : %f\n", tau[index]);
+    tau_deriv[index] = - torque_saturate(tau_deriv[index], 2700);    
+    return tau_deriv[index];
+}
 
 
 
